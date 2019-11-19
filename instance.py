@@ -7,7 +7,7 @@ import math
 
 
 class Instance():
-	def __init__(self):
+	def __init__(self, queue_type):
 		self.running_dir = os.path.dirname(os.path.abspath(__file__))
 		#self.theme_parks = ["caliAdv", "disHolly", "disland", "epcot", "MagicK"]
 		self.theme_parks = ["caliAdv"]
@@ -18,12 +18,12 @@ class Instance():
 		self.distance_matrix = {}
 		self.process_user_visits()
 		self.load_pois()
-		self.process_queues()
+		self.process_queues(queue_type)
 		
 
-	def process_queues(self):
+	def process_queues(self, queue_type):
 		for park in self.theme_parks:
-			self.queues[park] = POIQueue(len(self.pois[park]))
+			self.queues[park] = POIQueue(len(self.pois[park]), queue_type)
 			for user in self.users[park].values():
 				for sequence in user.sequences:
 					self.queues[park].add_to_queue(sequence, self.pois[park])
@@ -238,10 +238,11 @@ class Sequence:
 
 
 class POIQueue:
-	def __init__(self, num_pois):
+	def __init__(self, num_pois, queue_type):
 		self.num_pois = num_pois
 		self.q = {}
 		self.n_q = {}
+		self.queue_type = queue_type
 
 		for i in range(0, 60):
 			self.q[i] = {}
@@ -262,8 +263,10 @@ class POIQueue:
 			if queue_t < 0:
 				continue
 
-			#t = int(math.floor(total_time / 3600))
-			t = order
+			if self.queue_type == "time":
+				t = int(math.floor(total_time / 3600))
+			else:
+				t = order
 
 			print("t: {},  poi_id: {}".format(t, visit.poi_id))
 			print(sequence.seq_id)
@@ -273,9 +276,11 @@ class POIQueue:
 			total_time += visit_duration
 			order += 1
 
-	def  get_queue(self, total_time, poi_id):
-		#t = int(math.floor(total_time / 3600))
-		t = total_time
+	def  get_queue(self, total_time, order, poi_id):
+		if self.queue_type == "time":
+			t = int(math.floor(total_time / 3600))
+		else:
+			t = order
 
 		if self.n_q[t][poi_id] == 0:
 			return 0
@@ -351,4 +356,4 @@ class DistanceMatrix:
 	def get_walking_time(self, source, destination):
 		return float(self.distance_matrix[source][destination])
 
-running = Instance()
+running = Instance("time")

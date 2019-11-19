@@ -37,9 +37,10 @@ for theme in data.theme_parks:
 			print("Itinerary {}".format(itinerary))
 			print("")
 
-			it_n += 1
+			#it_n += 1
 
 			if itinerary is not None:
+				it_n += 1
 				recall_val += len(intersection(itinerary, s.as_list())) / len(s.as_list())
 				precision_val += len(intersection(itinerary, s.as_list())) / len(itinerary)
 		

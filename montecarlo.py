@@ -47,16 +47,16 @@ class MCTS():
 
                 if (a_i.is_fully_expanded):
                     #a_j = self.select_node(a_i, i_temp, total_cost)
-                    a_j = self.select_node(a_i, i_temp, len(i_temp))
+                    a_j = self.select_node(a_i, i_temp, total_cost, len(i_temp))
                 else:
                     #a_j = self.expand(a_i, i_temp, total_cost)
-                    a_j = self.expand(a_i, i_temp, len(i_temp))
+                    a_j = self.expand(a_i, i_temp, total_cost, len(i_temp))
 
                 i_temp.append(a_j.state)
                 total_cost += (self.distance_matrix.get_walking_time(a_i.state, a_j.state) + 
                 self.pois[a_i.state].ride_duration + 
                 #queue_time.get_queue(total_cost, a_j.state))
-                queue_time.get_queue(len(i_temp), a_j.state))
+                queue_time.get_queue(total_cost, len(i_temp), a_j.state))
 
                 if a_j.state == final_state:
                     break
@@ -82,7 +82,7 @@ class MCTS():
         
         return best_itinerary
 
-    def expand(self, node, itinerary, total_time):
+    def expand(self, node, itinerary, total_time, order):
         #print('expand')
         for poi in self.pois.values():
             if poi.poi_id in itinerary:
@@ -95,9 +95,9 @@ class MCTS():
                     node.is_fully_expanded = True
                 return new_node
         
-        return self.select_node(node, itinerary, total_time)
+        return self.select_node(node, itinerary, total_time, order)
 
-    def select_node(self, node, itinerary, total_time):
+    def select_node(self, node, itinerary, total_time, order):
         #print('select')
         a_n = None
         uct_max = 0
@@ -122,7 +122,7 @@ class MCTS():
             populariy_a_j = self.pois[a_j].popularity
             travel_time = self.distance_matrix.get_walking_time(node.state, a_j)
             ride_duration_a_j = self.pois[a_j].ride_duration
-            queue_time = self.queue_time.get_queue(total_time, a_j)
+            queue_time = self.queue_time.get_queue(total_time, order, a_j)
 
             exploit_a_j = ((cur_node.total_reward / cur_node.num_visits) +
                     ((interest_a_j + populariy_a_j) / (travel_time + ride_duration_a_j + queue_time)))
@@ -142,12 +142,22 @@ class MCTS():
 
     def simulate(self, itinerary):
         reward = 0
+        order = 0
+        total_time = 0
 
         for poi in itinerary:
             interest = self.user.get_interest(self.pois[poi].get_category(), self.excluded_sequence)
             popularity = self.pois[poi].popularity
+            queue = self.queue_time.get_queue(total_time, order, poi)
 
-            reward += interest + popularity
+            if queue == 0:
+                queue = 1
+
+            reward += (interest + popularity) / queue
+            order += 1
+            total_time += self.pois[poi].ride_duration + queue
+            if order != len(itinerary):
+                total_time += self.distance_matrix.get_walking_time(poi, itinerary[order])
 
         return reward
 
