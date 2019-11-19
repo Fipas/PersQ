@@ -33,7 +33,7 @@ class MCTS():
         self.queue_time = queue_time
         self.excluded_sequence = excluded_sequence
 
-        for i in range(self.iteration_limit):
+        for _ in range(self.iteration_limit):
             i_temp = []
             i_temp.append(self.root.state)
             total_cost = 0
@@ -110,9 +110,9 @@ class MCTS():
             
             if a_j not in node.children:
                 raise Exception('forbidden')
-                new_node = TreeNode(a_j, node)
-                node.children[a_j] = new_node
-                cur_node = new_node
+                #new_node = TreeNode(a_j, node)
+                #node.children[a_j] = new_node
+                #cur_node = new_node
             else:
                 cur_node = node.children[a_j]
 
